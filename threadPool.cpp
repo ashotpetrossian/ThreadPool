@@ -180,7 +180,6 @@ std::vector<int> test2(int n, int m)
 
     std::vector<int> res;
     for (int i{}; i < 10; ++i) {
-        // Create a uniform integer distribution between 1 and 6 (inclusive)
         std::uniform_int_distribution<> distribution(n, m);
         res.push_back(distribution(gen));
     }
