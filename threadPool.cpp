@@ -135,15 +135,15 @@ class ThreadPool
 
     // Submit a task to the thread pool
     template <typename F, typename... Args>
-    auto submit(F&& f, Args&&... args) -> std::future<decltype(f(args...))>
+    auto submit(F&& f, Args&&... args) -> std::future<std::invoke_result_t<F, Args...>>
     {
+        using return_type = std::invoke_result_t<F, Args...>;
         // Bind function and arguments into a callable object
         auto func = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
 
         // Wrap the callable into a packaged_task for future support
-        auto taskPtr = 
-            std::make_shared<std::packaged_task<decltype(f(args...))()>>(std::move(func));
-        std::future<decltype(f(args...))> future = taskPtr->get_future();
+        auto taskPtr = std::make_shared<std::packaged_task<return_type()>>(std::move(func));
+        std::future<return_type> future = taskPtr->get_future();
 
         // Create a wrapper function that can be stored in the task queue
         auto wrapper = [taskPtr] { (*taskPtr)(); };
@@ -161,14 +161,14 @@ class ThreadPool
     }
 
 private:
-    std::queue<std::function<void()>> taskQueue;  // Queue of tasks
-    std::vector<std::thread> workerThreads;       // Worker threads
+    std::queue<std::function<void()>> taskQueue;    // Queue of tasks
+    std::vector<std::thread> workerThreads;         // Worker threads
 
-    std::condition_variable cv;  // Condition variable for signaling
-    std::mutex mx;               // Mutex for shared data protection
+    std::condition_variable cv;                     // Condition variable for signaling
+    std::mutex mx;                                  // Mutex for shared data protection
 
-    size_t nThreads{};  // Number of threads
-    std::atomic<bool> stop{false};   // Flag to stop the pool
+    size_t nThreads{};                                // Number of threads
+    std::atomic<bool> stop{false};                  // Flag to stop the pool
 };
 
 int test1(const std::string& s, int i)
